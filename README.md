@@ -6,7 +6,7 @@ Self-hosted workflow to search YouTube, queue audio downloads with **yt-dlp**, r
 
 - **Node.js** 20+
 - **pnpm** 10+ (see `packageManager` in root `package.json`)
-- **Redis** — required for the download queue (BullMQ). Easiest: `docker compose up -d redis` from this repo (exposes `localhost:6379`).
+- **Redis** — required for the download queue (BullMQ). Easiest: `docker-compose up -d redis` from this repo (exposes `localhost:6379`).
 - **yt-dlp**, **ffmpeg**, and **ffprobe** on your `PATH` for search, download, and analysis hooks (the Docker API image installs these; local dev must install them yourself).
 
 ## Quick start (local development)
@@ -14,7 +14,7 @@ Self-hosted workflow to search YouTube, queue audio downloads with **yt-dlp**, r
 1. **Start Redis** (if nothing is listening on port 6379):
 
    ```bash
-   docker compose up -d redis
+   docker-compose up -d redis
    ```
 
 2. **Install dependencies** (from the repo root):
@@ -69,10 +69,15 @@ Production or split deployments should set the same `DATA_DIR` (shared volume) f
 Compose defines **redis**, **api** (Next standalone + yt-dlp + ffmpeg), **worker** (same image, `node worker.cjs`), and **web** (nginx + static assets, proxies `/api` → api). Data persists in the **`app-data`** volume (`DATA_DIR=/data`).
 
 - **Published port:** `8080` → web (`http://localhost:8080`).
-- Build images: `pnpm docker:build` or `docker compose build`.
-- Run: `pnpm docker:up` or `docker compose up -d`.
+- Build images: `pnpm docker:build` or `docker-compose build`.
+- Run: `pnpm docker:up` or `docker-compose up -d`.
 
 See `docker-compose.yml` and `docker/*.Dockerfile` for details.
+
+## Troubleshooting
+
+- **`Error: connect ECONNREFUSED 127.0.0.1:6379` (API / worker)** — Redis is not running. Start it, e.g. `docker-compose up -d redis`, or point `REDIS_URL` at your instance.
+- **`Could not locate the bindings file` / `better_sqlite3.node` (worker or API)** — pnpm 10 may skip native install scripts until they are allowlisted. This repo sets `pnpm.onlyBuiltDependencies` in root `package.json` for `better-sqlite3` (and related build-only deps). After pulling changes, run `pnpm install` again. If it still fails, run `pnpm rebuild better-sqlite3` from the repo root, or upgrade/downgrade Node and reinstall so the addon matches your ABI (e.g. `node-v137-darwin-arm64`).
 
 ## Repository layout
 

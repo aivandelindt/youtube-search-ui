@@ -5,7 +5,7 @@ description: Use for containerizing applications and creating docker-compose set
 
 # Docker Deployment
 
-Expert guidance for containerizing Python applications with Docker and orchestrating multi-service setups with Docker Compose.
+Expert guidance for containerizing Python applications with Docker and orchestrating multi-service setups with docker-compose.
 
 ## Core Patterns
 
@@ -134,7 +134,7 @@ EXPOSE 8000
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
 ```
 
-## Docker Compose Setup
+## docker-compose Setup
 
 ### Production docker-compose.yml
 
@@ -452,15 +452,15 @@ docker run -d -p 8000:8000 \
   -e SECRET_KEY=secret \
   --name api api-service:1.0.0
 
-# Docker Compose commands
-docker compose up -d                 # Start services in background
-docker compose up --build            # Rebuild and start
-docker compose down                  # Stop and remove containers
-docker compose down -v               # Also remove volumes
-docker compose logs -f api           # Follow logs for api service
-docker compose ps                    # List running services
-docker compose exec api bash         # Execute bash in api container
-docker compose restart api           # Restart api service
+# docker-compose commands
+docker-compose up -d                 # Start services in background
+docker-compose up --build            # Rebuild and start
+docker-compose down                  # Stop and remove containers
+docker-compose down -v               # Also remove volumes
+docker-compose logs -f api           # Follow logs for api service
+docker-compose ps                    # List running services
+docker-compose exec api bash         # Execute bash in api container
+docker-compose restart api           # Restart api service
 
 # View logs
 docker logs -f api                   # Follow logs

@@ -2,6 +2,13 @@
   "name": "youtube-search-ui",
   "private": true,
   "packageManager": "pnpm@10.33.0",
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "better-sqlite3",
+      "esbuild",
+      "msgpackr-extract"
+    ]
+  },
   "engines": {
     "node": ">=20"
   },
