@@ -62,7 +62,7 @@ Production builds: configure an absolute API base URL for the web app if the UI 
 
 - `docker-compose` builds **`youtube-search-ui-web`** (nginx + static Vite `dist`, proxies `/api` → `api`), **`youtube-search-ui-api`** (Next.js `standalone`, `yt-dlp` + `ffmpeg`), optional **`worker`** (same image, `node worker.cjs`), and **`redis`** for BullMQ.
 - Published port: **8080 → web:80** (browser uses same-origin `/api/...` through nginx).
-- Root scripts: `pnpm docker:build`, `pnpm docker:up` (use `docker-compose` instead if your CLI uses the plugin). See `docker-compose.yml` and `docker/*.Dockerfile`.
+- Root scripts: `pnpm docker:build`, `pnpm docker:up` — these call **`docker-compose`** (hyphenated standalone CLI), not `docker compose`. See `docker-compose.yml` and `docker/*.Dockerfile`.
 
 ## Prerequisites
 

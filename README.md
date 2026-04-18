@@ -79,9 +79,11 @@ Production or split deployments should set the same `DATA_DIR` (shared volume) f
 
 Compose defines **redis**, **api** (Next standalone + yt-dlp + ffmpeg), **worker** (same image, `node worker.cjs`), and **web** (nginx + static assets, proxies `/api` → api). Data persists in the **`app-data`** volume (`DATA_DIR=/data`).
 
+- **Compose CLI:** `pnpm docker:build` and `pnpm docker:up` run **`docker-compose`** (hyphenated). If your machine only has the plugin form, install the [Compose standalone binary](https://github.com/docker/compose/releases) or alias `docker-compose` to `docker compose`.
 - **Published port:** `8080` → web (`http://localhost:8080`).
 - Build images: `pnpm docker:build` or `docker-compose build`.
 - Run: `pnpm docker:up` or `docker-compose up -d`.
+- **`WARN ... buildx plugin`:** Compose may print this when Buildx is not installed. Images often still build; install [Docker Buildx](https://docs.docker.com/build/buildx/installing-buildx/) to remove the warning (optional).
 
 See `docker-compose.yml` and `docker/*.Dockerfile` for details.
 
