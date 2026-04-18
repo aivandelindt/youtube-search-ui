@@ -24,7 +24,9 @@ RUN apt-get update \
     ca-certificates \
     curl \
     ffmpeg \
+    gosu \
     python3 \
+    python3-pip \
     python3-venv \
   && python3 -m venv /opt/ytdlp-venv \
   && /opt/ytdlp-venv/bin/pip install --no-cache-dir "yt-dlp==${YTDLP_VERSION}" \
@@ -37,16 +39,31 @@ RUN groupadd --system --gid 1001 nodejs \
 WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=3000
+ENV HOSTNAME=0.0.0.0
 ENV NEXT_TELEMETRY_DISABLED=1
 
 COPY --from=builder --chown=nodejs:nodejs /repo/apps/api/.next/standalone ./
 COPY --from=builder --chown=nodejs:nodejs /repo/apps/api/.next/static ./apps/api/.next/static
 COPY --from=builder --chown=nodejs:nodejs /repo/apps/api/public ./apps/api/public
 COPY --from=builder --chown=nodejs:nodejs /repo/apps/api/.next/worker.cjs ./worker.cjs
+COPY --from=builder /repo/apps/api/analyzer ./apps/api/analyzer
 
-USER nodejs
+RUN pip3 install --break-system-packages --no-cache-dir -r /app/apps/api/analyzer/requirements.txt
+
+# Next standalone traces deps under pnpm's .pnpm/* without node_modules/better-sqlite3 at /app.
+# worker.cjs lives at /app/worker.cjs and resolves modules only from /app/node_modules — symlink the traced package.
+RUN pkg="$(find /app/node_modules/.pnpm -path '*/node_modules/better-sqlite3/package.json' 2>/dev/null | head -1)" \
+  && if [ -z "$pkg" ]; then echo "better-sqlite3 not found in standalone output"; exit 1; fi \
+  && mkdir -p /app/node_modules \
+  && ln -sfn "$(dirname "$pkg")" /app/node_modules/better-sqlite3
+
+COPY docker/api-entrypoint.sh /usr/local/bin/api-entrypoint.sh
+RUN chmod 755 /usr/local/bin/api-entrypoint.sh
+
 EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=40s --retries=3 \
   CMD curl -fsS "http://127.0.0.1:${PORT}/api/health" >/dev/null || exit 1
 
+USER root
+ENTRYPOINT ["/usr/local/bin/api-entrypoint.sh"]
 CMD ["node", "apps/api/server.js"]

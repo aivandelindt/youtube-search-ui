@@ -4,6 +4,10 @@ services:
     restart: unless-stopped
     ports:
       - "6379:6379"
+    command: ["redis-server", "/etc/redis.conf"]
+    volumes:
+      - ./docker/redis/redis.conf:/etc/redis.conf:ro
+      - redis-data:/data
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
@@ -24,6 +28,8 @@ services:
         condition: service_healthy
     environment:
       NODE_ENV: production
+      # Next listens on localhost by default; healthcheck uses 127.0.0.1 — bind all interfaces.
+      HOSTNAME: "0.0.0.0"
       PORT: "3000"
       REDIS_URL: redis://redis:6379
       DATA_DIR: /data
@@ -55,6 +61,8 @@ services:
     depends_on:
       redis:
         condition: service_healthy
+      api:
+        condition: service_started
     command: ["node", "worker.cjs"]
     working_dir: /app
     environment:
@@ -92,3 +100,4 @@ services:
 
 volumes:
   app-data:
+  redis-data:

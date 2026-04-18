@@ -14,6 +14,7 @@ export function getDb(): Database.Database {
   const file = path.join(dir, "app.db");
   const database = new Database(file);
   database.pragma("journal_mode = WAL");
+  database.pragma("busy_timeout = 10000");
   database.pragma("foreign_keys = ON");
   migrate(database);
   db = database;

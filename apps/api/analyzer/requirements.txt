@@ -1,0 +1,5 @@
+# Python sidecar for apps/api/lib/analyze-track.ts (spawn analyzer/analyze.py)
+librosa>=0.10.0
+numpy>=1.24.0
+soundfile>=0.12.0
+pyloudnorm>=0.1.1
