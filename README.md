@@ -6,7 +6,7 @@ Self-hosted workflow to search YouTube, queue audio downloads with **yt-dlp**, r
 
 - **Node.js** 20+
 - **pnpm** 10+ (see `packageManager` in root `package.json`)
-- **Redis** — required for the download queue (BullMQ). Easiest: `docker-compose up -d redis` from this repo (exposes `localhost:6379`).
+- **Redis** — required for the download queue (BullMQ). From the repo root: **`pnpm redis`** (or `docker-compose up -d redis`; exposes `localhost:6379`).
 - **yt-dlp**, **ffmpeg**, and **ffprobe** on your `PATH` for search, download, and analysis hooks (the Docker API image installs these; local dev must install them yourself).
 - **Python 3** with analyzer dependencies for real BPM/key/LUFS (Docker installs these from `apps/api/analyzer/requirements.txt`). Local setup:
 
@@ -18,11 +18,13 @@ Self-hosted workflow to search YouTube, queue audio downloads with **yt-dlp**, r
 
 ## Quick start (local development)
 
-1. **Start Redis** (if nothing is listening on port 6379):
+1. **Start Redis** (required for API + worker; default `redis://127.0.0.1:6379`). If you use Docker:
 
    ```bash
-   docker-compose up -d redis
+   pnpm redis
    ```
+
+   Same as `docker-compose up -d redis`. Without Redis, the worker logs `ECONNREFUSED` on port 6379.
 
 2. **Install dependencies** (from the repo root):
 
@@ -69,6 +71,7 @@ Production or split deployments should set the same `DATA_DIR` (shared volume) f
 
 | Script | Description |
 | ------ | ----------- |
+| `pnpm redis` | Starts the Compose **redis** service (`docker-compose up -d redis`) for local dev. |
 | `pnpm dev` | Runs web + API + worker via `concurrently` (needs Redis). |
 | `pnpm dev:web` / `pnpm dev:api` | Single app as above. |
 | `pnpm build` | Builds all workspace packages (`apps/web` + `apps/api`, including the bundled `worker.cjs`). |
@@ -89,9 +92,13 @@ See `docker-compose.yml` and `docker/*.Dockerfile` for details.
 
 ## Troubleshooting
 
-- **Docker: API stuck “Waiting” or unhealthy / exits immediately** — Often **`EACCES` on `/data`**: Compose named volumes are `root`-owned while the app runs as user **`nodejs` (uid 1001)**. The API image entrypoint (`docker/api-entrypoint.sh`) runs **`chown nodejs:nodejs /data`** then starts Node with **`gosu`**. Rebuild the API image after pulling. If you override `entrypoint`, restore this behavior or make `/data` writable by uid 1001.
-- **`Error: connect ECONNREFUSED 127.0.0.1:6379` (API / worker)** — Redis is not running. Start it, e.g. `docker-compose up -d redis`, or point `REDIS_URL` at your instance.
-- **`Could not locate the bindings file` / `better_sqlite3.node` (worker or API)** — pnpm 10 may skip native install scripts until they are allowlisted. This repo sets `pnpm.onlyBuiltDependencies` in root `package.json` for `better-sqlite3` (and related build-only deps). After pulling changes, run `pnpm install` again. If it still fails, run `pnpm rebuild better-sqlite3` from the repo root, or upgrade/downgrade Node and reinstall so the addon matches your ABI (e.g. `node-v137-darwin-arm64`).
+- **Docker: API unhealthy (healthcheck fails)** — Next often binds **`localhost` only**; the image sets **`HOSTNAME=0.0.0.0`** so **`curl http://127.0.0.1:3000/api/health`** succeeds. Ensure Compose or the image still passes that env.
+- **Docker: worker `Restarting (1)`** — Often **`SQLITE_BUSY`** when API and worker both open **`app.db`** during startup migrations. The API sets **`busy_timeout`** (see `lib/db.ts`) so SQLite waits instead of throwing. The worker also **`depends_on` `api`** with **`service_started`** so startup order is less racy. Rebuild images after pulling.
+- **Docker: worker `Cannot find module 'better-sqlite3'`** — Standalone output keeps **`better-sqlite3` under `node_modules/.pnpm/...` only**; **`worker.cjs`** loads it via `require` from `/app`. The API image adds a **symlink** at `/app/node_modules/better-sqlite3` (see `docker/api.Dockerfile`). Rebuild the API/worker image after pulling.
+- **Docker: API stuck “Waiting” or exits immediately** — Often **`EACCES` on `/data`**: Compose named volumes are `root`-owned while the app runs as user **`nodejs` (uid 1001)**. The API image entrypoint (`docker/api-entrypoint.sh`) runs **`chown nodejs:nodejs /data`** then starts Node with **`gosu`**. Rebuild the API image after pulling. If you override `entrypoint`, restore this behavior or make `/data` writable by uid 1001.
+- **`Error: connect ECONNREFUSED 127.0.0.1:6379` (API / worker)** — Redis is not running. From the repo root run **`pnpm redis`** (or `docker-compose up -d redis`), or point **`REDIS_URL`** at your Redis instance.
+- **`Could not locate the bindings file` / `better_sqlite3.node` (worker or API)** — pnpm 10 may skip native install scripts until they are allowlisted. This repo sets `pnpm.onlyBuiltDependencies` in root `package.json` for `better-sqlite3` and `esbuild`. After pulling changes, run `pnpm install` again. If it still fails, run `pnpm rebuild better-sqlite3` from the repo root, or upgrade/downgrade Node and reinstall so the addon matches your ABI (e.g. `node-v137-darwin-arm64`).
+- **`msgpackr-extract` install / `ERR_INVALID_ARG_TYPE` / `require(undefined)`** — The optional native addon used by BullMQ’s stack can fail its postinstall under **Node 22 + pnpm**. It is **not** in `onlyBuiltDependencies` so its lifecycle script is skipped; BullMQ/msgpackr use a **JavaScript fallback** (slightly slower, fine for this app). Do not add `msgpackr-extract` to `onlyBuiltDependencies` unless you verify a fixed version.
 
 ## Repository layout
 
