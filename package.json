@@ -10,6 +10,8 @@
     "dev:web": "pnpm --filter web dev",
     "dev:api": "pnpm --filter api dev",
     "build": "pnpm -r run build",
-    "lint": "pnpm -r run lint"
+    "lint": "pnpm -r run lint",
+    "docker:build": "docker-compose build",
+    "docker:up": "docker-compose up --build -d"
   }
 }

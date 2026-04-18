@@ -53,6 +53,12 @@ pnpm dev:api      # Next.js API only
 
 Production builds: configure an absolute API base URL for the web app if the UI and API are on different origins (the dev proxy is Vite-only).
 
+## Docker
+
+- `docker compose` builds **`youtube-search-ui-web`** (nginx + static Vite `dist`, proxies `/api` → `api`) and **`youtube-search-ui-api`** (Next.js `standalone`, non-root `nodejs` user, `yt-dlp` + `ffmpeg` in image).
+- Published port: **8080 → web:80** (browser uses same-origin `/api/...` through nginx).
+- Root scripts: `pnpm docker:build`, `pnpm docker:up` (use `docker compose` instead if your CLI uses the plugin). See `docker-compose.yml` and `docker/*.Dockerfile`.
+
 ## Prerequisites
 
 - Node 20+
