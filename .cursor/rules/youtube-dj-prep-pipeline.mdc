@@ -1,0 +1,14 @@
+---
+description: YouTube DJ prep monorepo — stack, yt-dlp search API, and next implementation slices
+alwaysApply: true
+---
+
+# YouTube DJ prep pipeline
+
+Read **`SKILL.md`** at the repo root for full context: stack (Vite + DaisyUI + Next.js API), non-functional goals, yt-dlp conventions, Rekordbox/CDJ compatibility, and **which vertical slice is implemented**.
+
+When adding features:
+
+- Keep API validation with **Zod**; keep `yt-dlp` / worker logic in small modules under `apps/api/lib/`, not inlined in route files except thin wiring.
+- Frontend: DaisyUI + Tailwind utilities; proxy `/api` to Next in dev (see `apps/web/vite.config.ts`).
+- Do not block request handlers on long downloads; use a queue for future download/analysis work.

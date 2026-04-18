@@ -1,4 +1,18 @@
+import { useState } from 'react'
+
+import {
+  fetchYoutubeSearch,
+  type YoutubeSearchResultItem,
+} from './api/youtube-search'
+import { ResultsGrid } from './components/ResultsGrid'
+import { SearchBar } from './components/SearchBar'
+
 function App() {
+  const [results, setResults] = useState<YoutubeSearchResultItem[]>([])
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [searched, setSearched] = useState(false)
+
   return (
     <div className="min-h-screen bg-base-200">
       <div className="navbar bg-base-100 shadow-lg">
@@ -26,21 +40,44 @@ function App() {
         </div>
       </div>
 
-      <main className="container mx-auto px-4 py-8">
-        <div className="hero rounded-box bg-base-100 shadow-xl">
-          <div className="hero-content flex-col gap-6 py-12 text-center">
-            <div>
-              <h1 className="text-4xl font-bold">Monorepo ready</h1>
-              <p className="mt-2 text-base-content/80">
-                Vite + React + DaisyUI (web) and Next.js App Router (api). Run{" "}
-                <code className="kbd kbd-sm">pnpm dev</code> from the repo root.
-              </p>
+      <main className="container mx-auto max-w-6xl px-4 py-8">
+        <div className="flex flex-col gap-8">
+          <SearchBar
+            disabled={loading}
+            onSubmit={async ({ query, max, duration }) => {
+              setError(null)
+              setLoading(true)
+              try {
+                const data = await fetchYoutubeSearch({ q: query, max, duration })
+                setResults(data.results)
+                setSearched(true)
+              } catch (e) {
+                const msg = e instanceof Error ? e.message : 'Search failed'
+                setError(msg)
+                setResults([])
+              } finally {
+                setLoading(false)
+              }
+            }}
+          />
+
+          {error ? (
+            <div role="alert" className="alert alert-error">
+              <span>{error}</span>
             </div>
-            <div className="flex flex-wrap justify-center gap-2">
-              <span className="badge badge-primary">apps/web</span>
-              <span className="badge badge-secondary">apps/api</span>
-            </div>
-          </div>
+          ) : null}
+
+          <section aria-label="Search results">
+            <h2 className="mb-4 text-lg font-semibold">Results</h2>
+            <ResultsGrid
+              results={results}
+              emptyHint={
+                searched
+                  ? 'No videos matched this query and filters.'
+                  : 'No results yet. Run a search above.'
+              }
+            />
+          </section>
         </div>
       </main>
     </div>
