@@ -87,6 +87,7 @@ See `docker-compose.yml` and `docker/*.Dockerfile` for details.
 
 ## Troubleshooting
 
+- **Docker: API stuck “Waiting” or unhealthy / exits immediately** — Often **`EACCES` on `/data`**: Compose named volumes are `root`-owned while the app runs as user **`nodejs` (uid 1001)**. The API image entrypoint (`docker/api-entrypoint.sh`) runs **`chown nodejs:nodejs /data`** then starts Node with **`gosu`**. Rebuild the API image after pulling. If you override `entrypoint`, restore this behavior or make `/data` writable by uid 1001.
 - **`Error: connect ECONNREFUSED 127.0.0.1:6379` (API / worker)** — Redis is not running. Start it, e.g. `docker-compose up -d redis`, or point `REDIS_URL` at your instance.
 - **`Could not locate the bindings file` / `better_sqlite3.node` (worker or API)** — pnpm 10 may skip native install scripts until they are allowlisted. This repo sets `pnpm.onlyBuiltDependencies` in root `package.json` for `better-sqlite3` (and related build-only deps). After pulling changes, run `pnpm install` again. If it still fails, run `pnpm rebuild better-sqlite3` from the repo root, or upgrade/downgrade Node and reinstall so the addon matches your ABI (e.g. `node-v137-darwin-arm64`).
 

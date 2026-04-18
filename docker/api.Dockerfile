@@ -24,6 +24,7 @@ RUN apt-get update \
     ca-certificates \
     curl \
     ffmpeg \
+    gosu \
     python3 \
     python3-pip \
     python3-venv \
@@ -48,9 +49,13 @@ COPY --from=builder /repo/apps/api/analyzer ./apps/api/analyzer
 
 RUN pip3 install --break-system-packages --no-cache-dir -r /app/apps/api/analyzer/requirements.txt
 
-USER nodejs
+COPY docker/api-entrypoint.sh /usr/local/bin/api-entrypoint.sh
+RUN chmod 755 /usr/local/bin/api-entrypoint.sh
+
 EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=40s --retries=3 \
   CMD curl -fsS "http://127.0.0.1:${PORT}/api/health" >/dev/null || exit 1
 
+USER root
+ENTRYPOINT ["/usr/local/bin/api-entrypoint.sh"]
 CMD ["node", "apps/api/server.js"]
