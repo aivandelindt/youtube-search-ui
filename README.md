@@ -8,6 +8,13 @@ Self-hosted workflow to search YouTube, queue audio downloads with **yt-dlp**, r
 - **pnpm** 10+ (see `packageManager` in root `package.json`)
 - **Redis** — required for the download queue (BullMQ). Easiest: `docker-compose up -d redis` from this repo (exposes `localhost:6379`).
 - **yt-dlp**, **ffmpeg**, and **ffprobe** on your `PATH` for search, download, and analysis hooks (the Docker API image installs these; local dev must install them yourself).
+- **Python 3** with analyzer dependencies for real BPM/key/LUFS (Docker installs these from `apps/api/analyzer/requirements.txt`). Local setup:
+
+  ```bash
+  pip3 install -r apps/api/analyzer/requirements.txt
+  ```
+
+  The API spawns `python3 apps/api/analyzer/analyze.py <file>` (override with `ANALYZER_PYTHON` / `ANALYZER_SCRIPT`). If Python is missing or fails, analysis falls back to a deterministic stub (`analyzerVersion` contains `stub-fallback`).
 
 ## Quick start (local development)
 
@@ -51,6 +58,10 @@ Self-hosted workflow to search YouTube, queue audio downloads with **yt-dlp**, r
 | `REDIS_HOST` / `REDIS_PORT` / `REDIS_PASSWORD` | Alternative to `REDIS_URL` for BullMQ (`apps/api/lib/bullmq-connection.ts`). |
 | `DATA_DIR` | Root directory for SQLite (`app.db`), library audio, and the yt-dlp download archive. Default: `./data` under the API working directory. |
 | `PORT` | Next.js listen port (default 3000). |
+| `ANALYZER_PYTHON` | Python executable (default `python3`). |
+| `ANALYZER_SCRIPT` | Absolute path to `analyze.py` if auto-detection fails. |
+| `ANALYZER_TIMEOUT_MS` | Analyzer subprocess timeout (default `120000`). |
+| `ANALYZER_DISABLE` | Set to `1` to force stub analysis (testing). |
 
 Production or split deployments should set the same `DATA_DIR` (shared volume) for **api** and **worker** so the queue and SQLite stay consistent.
 
@@ -91,33 +102,29 @@ See `docker-compose.yml` and `docker/*.Dockerfile` for details.
 
 These items are **not** fully implemented or are intentionally left for later. Use them as a backlog aligned with `SKILL.md`.
 
-### 1. Real audio analysis (replace the stub)
-
-`apps/api/lib/analyze-track.ts` is a **placeholder**: deterministic pseudo-BPM/key from file path hashing plus `ffprobe` duration. The intended direction is a **Python sidecar** (e.g. librosa or Essentia) invoked from Node (spawn `analyzer/analyze.py` or similar), with a stable JSON contract and version string in `analyzerVersion`. Until then, Rekordbox export and library metadata should be treated as **best-effort**, not club-accurate.
-
-### 2. Stronger download idempotency
+### 1. Stronger download idempotency
 
 The yt-dlp **download archive** file is used to skip already-seen IDs. Further hardening (per `SKILL.md`) could include **content hashing**, clearer conflict handling when files already exist, and surfacing archive/skip decisions in the UI.
 
-### 3. SSE vs WebSockets
+### 2. SSE vs WebSockets
 
 Live queue status uses **SSE** (`GET /api/queue/stream`) with Redis pub/sub on the API process. A **WebSocket** path is still optional if you need bidirectional messages or different scaling characteristics; not required for the current feature set.
 
-### 4. Production: split origins for web and API
+### 3. Production: split origins for web and API
 
 In development, Vite proxies `/api` to Next. If you deploy the static site and API on **different origins**, you must configure the frontend base URL (or reverse proxy) so API calls resolve correctly; same-origin `/api` through nginx (as in Compose) avoids extra CORS setup.
 
-### 5. Download and encode policy (documentation vs enforcement)
+### 4. Download and encode policy (documentation vs enforcement)
 
 `SKILL.md` lists practical defaults (e.g. MP3 320 CBR for CDJs, embed thumbnails/metadata). The UI and `yt-dlp` flags should stay aligned with those notes; tightening validation and presets is ongoing product work.
 
-### 6. Persistence and ops
+### 5. Persistence and ops
 
 - **SQLite + `better-sqlite3`** is embedded; migrating to **Prisma** (or another layer) is optional and not started.
 - **Backups:** plan snapshots of `DATA_DIR` (DB + audio + archive file) for production.
 - **Redis:** required at runtime; monitor memory and persistence settings if you move beyond a single-node setup.
 
-### 7. Tests and CI
+### 6. Tests and CI
 
 Automated **e2e or integration tests** (Playwright, queue + API smoke) are not wired in this repo yet; add them before treating releases as safe without manual checks.
 

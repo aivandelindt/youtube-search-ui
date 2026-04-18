@@ -25,6 +25,7 @@ RUN apt-get update \
     curl \
     ffmpeg \
     python3 \
+    python3-pip \
     python3-venv \
   && python3 -m venv /opt/ytdlp-venv \
   && /opt/ytdlp-venv/bin/pip install --no-cache-dir "yt-dlp==${YTDLP_VERSION}" \
@@ -43,6 +44,9 @@ COPY --from=builder --chown=nodejs:nodejs /repo/apps/api/.next/standalone ./
 COPY --from=builder --chown=nodejs:nodejs /repo/apps/api/.next/static ./apps/api/.next/static
 COPY --from=builder --chown=nodejs:nodejs /repo/apps/api/public ./apps/api/public
 COPY --from=builder --chown=nodejs:nodejs /repo/apps/api/.next/worker.cjs ./worker.cjs
+COPY --from=builder /repo/apps/api/analyzer ./apps/api/analyzer
+
+RUN pip3 install --break-system-packages --no-cache-dir -r /app/apps/api/analyzer/requirements.txt
 
 USER nodejs
 EXPOSE 3000

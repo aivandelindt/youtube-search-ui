@@ -10,7 +10,7 @@
 | Frontend | Vite + React + Tailwind CSS + DaisyUI                                   |
 | Backend  | Next.js App Router (`app/api/**/route.ts`), Node 20+                    |
 | Binaries | `yt-dlp`, `ffmpeg`, `ffprobe` on `PATH`                                 |
-| Analysis | Python sidecar (librosa / essentia) preferred for accuracy              |
+| Analysis | Python sidecar `analyzer/analyze.py` (librosa + pyloudnorm); stub fallback |
 | Queue    | BullMQ + Redis (`download` queue, worker process, SSE via Redis pub/sub) |
 | Storage  | SQLite (`better-sqlite3` or Prisma) + structured library folder on disk |
 
@@ -26,7 +26,7 @@
 
 1. **Done:** Monorepo scaffold (`apps/web`, `apps/api`).
 2. **Done:** YouTube search — UI + `GET /api/youtube/search` via `yt-dlp` (`ytsearchN:` + `--dump-json --flat-playlist`).
-3. **Done:** Download queue (`POST /api/downloads`, **BullMQ** + **Redis**, separate **`pnpm --filter api worker`**, `yt-dlp` + archive), **SSE** (`GET /api/queue/stream`, API subscribes to Redis job updates), **SQLite** (`better-sqlite3`, `DATA_DIR`/`data/app.db`), **stub analysis** (`lib/analyze-track.ts` — replace with Python later), **library** (`GET /api/library`, tracks CRUD, preview `/api/tracks/:id/file`), **Rekordbox XML** (`POST /api/export/rekordbox`).
+3. **Done:** Download queue (`POST /api/downloads`, **BullMQ** + **Redis**, separate **`pnpm --filter api worker`**, `yt-dlp` + archive), **SSE** (`GET /api/queue/stream`, API subscribes to Redis job updates), **SQLite** (`better-sqlite3`, `DATA_DIR`/`data/app.db`), **analysis** (`analyzer/analyze.py` — librosa + pyloudnorm; Node in `lib/analyze-track.ts` with stub fallback if Python is unavailable), **library** (`GET /api/library`, tracks CRUD, preview `/api/tracks/:id/file`), **Rekordbox XML** (`POST /api/export/rekordbox`).
 
 ## yt-dlp search (this repo)
 
