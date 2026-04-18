@@ -14,7 +14,7 @@ FROM deps AS builder
 COPY apps/api apps/api
 WORKDIR /repo/apps/api
 ENV NEXT_TELEMETRY_DISABLED=1
-RUN pnpm exec next build
+RUN pnpm run build
 
 FROM ${NODE_IMAGE} AS runner
 ARG YTDLP_VERSION
@@ -42,6 +42,7 @@ ENV NEXT_TELEMETRY_DISABLED=1
 COPY --from=builder --chown=nodejs:nodejs /repo/apps/api/.next/standalone ./
 COPY --from=builder --chown=nodejs:nodejs /repo/apps/api/.next/static ./apps/api/.next/static
 COPY --from=builder --chown=nodejs:nodejs /repo/apps/api/public ./apps/api/public
+COPY --from=builder --chown=nodejs:nodejs /repo/apps/api/.next/worker.cjs ./worker.cjs
 
 USER nodejs
 EXPOSE 3000

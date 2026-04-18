@@ -1,4 +1,15 @@
 services:
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
   api:
     build:
       context: .
@@ -8,9 +19,16 @@ services:
         YTDLP_VERSION: "2024.12.13"
     image: youtube-search-ui-api:0.1.0
     restart: unless-stopped
+    depends_on:
+      redis:
+        condition: service_healthy
     environment:
       NODE_ENV: production
       PORT: "3000"
+      REDIS_URL: redis://redis:6379
+      DATA_DIR: /data
+    volumes:
+      - app-data:/data
     expose:
       - "3000"
     healthcheck:
@@ -25,6 +43,26 @@ services:
       timeout: 5s
       retries: 3
       start_period: 40s
+    deploy:
+      resources:
+        limits:
+          cpus: "2"
+          memory: 2G
+
+  worker:
+    image: youtube-search-ui-api:0.1.0
+    restart: unless-stopped
+    depends_on:
+      redis:
+        condition: service_healthy
+    command: ["node", "worker.cjs"]
+    working_dir: /app
+    environment:
+      NODE_ENV: production
+      REDIS_URL: redis://redis:6379
+      DATA_DIR: /data
+    volumes:
+      - app-data:/data
     deploy:
       resources:
         limits:
@@ -51,3 +89,6 @@ services:
       timeout: 5s
       retries: 3
       start_period: 15s
+
+volumes:
+  app-data:

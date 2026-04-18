@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 import { createDownloadsBodySchema } from "@/lib/download-settings-schema";
 import { listJobs } from "@/lib/jobs-repo";
-import { getJobRunner } from "@/lib/job-runner";
+import { enqueueNewJob } from "@/lib/download-jobs";
 import { getDb } from "@/lib/db";
 
 export const runtime = "nodejs";
@@ -24,12 +24,11 @@ export async function POST(request: Request) {
     );
   }
 
-  const runner = getJobRunner();
   const jobIds: string[] = [];
   const deduped: string[] = [];
 
   for (const item of parsed.data.items) {
-    const { jobId, deduped: isDup } = runner.enqueueNewJob({
+    const { jobId, deduped: isDup } = await enqueueNewJob({
       videoId: item.videoId,
       title: item.title,
       channel: item.channel ?? "",

@@ -5,8 +5,11 @@
   "engines": {
     "node": ">=20"
   },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  },
   "scripts": {
-    "dev": "pnpm --parallel --filter web --filter api dev",
+    "dev": "concurrently -k -n web,api,worker -c blue,green,magenta \"pnpm --filter web dev\" \"pnpm --filter api dev\" \"pnpm --filter api worker\"",
     "dev:web": "pnpm --filter web dev",
     "dev:api": "pnpm --filter api dev",
     "build": "pnpm -r run build",

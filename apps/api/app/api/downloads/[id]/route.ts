@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { getJob } from "@/lib/jobs-repo";
-import { getJobRunner } from "@/lib/job-runner";
+import { cancelDownloadJob } from "@/lib/download-jobs";
 import { getDb } from "@/lib/db";
 
 export const runtime = "nodejs";
@@ -22,8 +22,7 @@ export async function GET(_request: Request, context: Ctx) {
 export async function DELETE(_request: Request, context: Ctx) {
   getDb();
   const { id } = await context.params;
-  const runner = getJobRunner();
-  const ok = runner.cancel(id);
+  const ok = await cancelDownloadJob(id);
   if (!ok) {
     return NextResponse.json({ error: "Cannot cancel job" }, { status: 400 });
   }

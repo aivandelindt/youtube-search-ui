@@ -4,7 +4,7 @@ import path from "node:path";
 const nextConfig: NextConfig = {
   output: "standalone",
   outputFileTracingRoot: path.join(process.cwd(), "../.."),
-  serverExternalPackages: ["better-sqlite3", "p-queue"],
+  serverExternalPackages: ["better-sqlite3", "bullmq", "ioredis"],
   turbopack: {
     root: path.join(process.cwd(), "../.."),
   },
