@@ -90,6 +90,11 @@ Compose defines **redis**, **api** (Next standalone + yt-dlp + ffmpeg), **worker
 
 See `docker-compose.yml` and `docker/*.Dockerfile` for details.
 
+### Redis container logs
+
+- **`WARNING Memory overcommit must be enabled`** — Redis wants the **Linux host** sysctl `vm.overcommit_memory=1` so fork-based RDB/AOF is safer under memory pressure. **Docker Desktop (macOS/Windows)** usually cannot set this inside the VM; the message is **common and safe to ignore** for local dev with enough RAM. On **Linux servers**, run `sudo sysctl vm.overcommit_memory=1` (and persist in `/etc/sysctl.conf`) if you run heavy Redis persistence.
+- **`Warning: no config file specified`** — The Compose **redis** service uses **`docker/redis/redis.conf`** mounted as `/etc/redis.conf` so Redis starts with an explicit config (appendonly, `maxmemory`, etc.).
+
 ## Troubleshooting
 
 - **Docker: API unhealthy (healthcheck fails)** — Next often binds **`localhost` only**; the image sets **`HOSTNAME=0.0.0.0`** so **`curl http://127.0.0.1:3000/api/health`** succeeds. Ensure Compose or the image still passes that env.
