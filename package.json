@@ -1,0 +1,15 @@
+{
+  "name": "youtube-search-ui",
+  "private": true,
+  "packageManager": "pnpm@10.33.0",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "pnpm --parallel --filter web --filter api dev",
+    "dev:web": "pnpm --filter web dev",
+    "dev:api": "pnpm --filter api dev",
+    "build": "pnpm -r run build",
+    "lint": "pnpm -r run lint"
+  }
+}
