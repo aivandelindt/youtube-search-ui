@@ -4,14 +4,16 @@
 
 ## Stack (target)
 
-| Layer | Choice |
-|--------|--------|
-| Frontend | Vite + React + Tailwind CSS + DaisyUI |
-| Backend | Next.js App Router (`app/api/**/route.ts`), Node 20+ |
-| Binaries | `yt-dlp`, `ffmpeg`, `ffprobe` on `PATH` |
-| Analysis | Python sidecar (librosa / essentia) preferred for accuracy |
-| Queue | BullMQ + Redis in production; in-memory / `p-queue` in dev |
-| Storage | SQLite (`better-sqlite3` or Prisma) + structured library folder on disk |
+
+| Layer    | Choice                                                                  |
+| -------- | ----------------------------------------------------------------------- |
+| Frontend | Vite + React + Tailwind CSS + DaisyUI                                   |
+| Backend  | Next.js App Router (`app/api/**/route.ts`), Node 20+                    |
+| Binaries | `yt-dlp`, `ffmpeg`, `ffprobe` on `PATH`                                 |
+| Analysis | Python sidecar (librosa / essentia) preferred for accuracy              |
+| Queue    | BullMQ + Redis in production; in-memory / `p-queue` in dev              |
+| Storage  | SQLite (`better-sqlite3` or Prisma) + structured library folder on disk |
+
 
 ## Non-functional goals
 
@@ -24,11 +26,11 @@
 
 1. **Done:** Monorepo scaffold (`apps/web`, `apps/api`).
 2. **Done:** YouTube search — UI + `GET /api/youtube/search` via `yt-dlp` (`ytsearchN:` + `--dump-json --flat-playlist`).
-3. **Next:** Downloads queue, SSE, library, analysis, Rekordbox XML.
+3. **Done:** Download queue (`POST /api/downloads`, in-process `p-queue`, `yt-dlp` + archive), **SSE** (`GET /api/queue/stream`), **SQLite** (`better-sqlite3`, `DATA_DIR`/`data/app.db`), **stub analysis** (`lib/analyze-track.ts` — replace with Python later), **library** (`GET /api/library`, tracks CRUD, preview `/api/tracks/:id/file`), **Rekordbox XML** (`POST /api/export/rekordbox`).
 
 ## yt-dlp search (this repo)
 
-- Query params: `q`, `max` (1–50), `duration` (`any` \| `short` \| `medium` \| `long`).
+- Query params: `q`, `max` (1–50), `duration` (`any`  `short`  `medium`  `long`).
 - Implementation: `yt-dlp --dump-json --flat-playlist "ytsearch{max}:{q}"`, NDJSON stdout, normalized to `{ results: [...] }`.
 - Dev: Vite proxies `/api` → Next (`http://localhost:3000`).
 
@@ -64,3 +66,4 @@ Production builds: configure an absolute API base URL for the web app if the UI 
 - Node 20+
 - `pnpm`
 - `yt-dlp` installed and on `PATH` (search API)
+
